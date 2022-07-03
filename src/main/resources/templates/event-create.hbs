@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <title>Events | Dallas Makerspace Calendar</title>
+    <link href="https://calendar.dallasmakerspace.org/favicon.ico" type="image/x-icon" rel="icon">
+    <link href="https://calendar.dallasmakerspace.org/favicon.ico" type="image/x-icon" rel="shortcut icon">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://calendar.dallasmakerspace.org/css/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet"
+          href="https://calendar.dallasmakerspace.org/css/eonasdan-bootstrap-datetimepicker/bootstrap-datetimepicker.min.css">
+    <link rel="stylesheet" href="https://calendar.dallasmakerspace.org/css/app.css">
+    <script src="https://calendar.dallasmakerspace.org/js/jquery/jquery.min.js"></script>
+    <script src="https://calendar.dallasmakerspace.org/js/bootstrap/bootstrap.min.js"></script>
+    <script src="https://calendar.dallasmakerspace.org/js/moment/moment.min.js"></script>
+    <script src="https://calendar.dallasmakerspace.org/js/eonasdan-bootstrap-datetimepicker/bootstrap-datetimepicker.min.js"></script>
+    <script src="https://calendar.dallasmakerspace.org/js/app.js"></script>
+</head>
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="/" class="navbar-brand">Dallas Makerspace Calendar</a></div>
+        <div id="navbar" class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                </li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                       aria-expanded="false">My Account <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="/events/submitted">Hosting Events</a></li>
+                        <li>
+                            <a href="/events/attending">Attending Events</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li>
+                            <a href="/users/logout">Logout</a></li>
+                    </ul>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container">
+    <div class="events add">
+        {{#contactError}}
+            <div class="alert alert-danger" role="alert">
+                <p><strong>Your account is unable to submit events.</strong></p>
+                <p>There was an issue synchronizing your AD account data with the calendar system. In order for your
+                    account
+                    data to be successfully synced your AD account information needs to include your name, email address
+                    and
+                    phone number.</p>
+                <p>If your account has all of that on file you can try logging out and logging in again to see if this
+                    error
+                    disappears, otherwise contact an admin for further assistance.</p>
+            </div>
+        {{/contactError}}
+        {{^contaxtError}}
+            {{#blacklisted}}
+                <div class="alert alert-danger" role="alert">
+                    <p><strong>Your event submission privileges have been revoked.</strong></p>
+                    <p>Reach out to an administrator for more information.</p>
+                </div>
+            {{/blacklisted}}
+            {{^blacklisted}}
+                <form action="/events/create" enctype="multipart/form-data" method="post" , accept-charset="utf-8"
+                      role="form">
+                    <!--                    TODO Add in CSRF stuffs? -->
+
+                    <fieldset>
+                        <legend>General</legend>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <div class="form-group text required">
+                                    <label class="control-label" for="name">Class or Event Title</label>
+                                    <input type="text" name="name" required="required" maxlength="80" id="name"
+                                           class="form-control">
+                                </div>
+                                <div class="form-group radio">
+                                    <div class="radio-inline-wrapper">
+                                        <input type="hidden" name="categories[_ids][0]" value="">
+                                        <label class="radio-inline" for="categories-ids-0-1">
+                                            <input type="radio" name="categories[_ids][0]" value="1"
+                                                   id="categories-ids-0-1" checked="checked">Class</label>
+                                        <label class="radio-inline" for="categories-ids-0-2">
+                                            <input type="radio" name="categories[_ids][0]" value="2"
+                                                   id="categories-ids-0-2">Event</label>
+                                    </div>
+                                </div>
+                                <div class="form-group text required">
+                                    <label class="control-label" for="short-description">Short Description</label>
+                                    <input type="text" name="short_description" required="required" maxlength="250"
+                                           id="short-description" class="form-control">
+                                    <div class="help-block">250 characters or less. Give a general description of the
+                                        event or class, think of it as a tagline.
+                                    </div>
+                                </div>
+                                <div class="form-group text required">
+                                    <label class="control-label" for="event-start">Event Start</label>
+                                    <div class="input-group">
+                                        <input type="text" name="event_start" autocomplete="off" required="required"
+                                               id="event-start" class="form-control">
+                                        <span class="input-group-addon">
+                                            <span class="glyphicon glyphicon-calendar"></span>
+                                        </span>
+                                    </div>
+                                    <div class="help-block">Event start time for attendees. Do not include any needed
+                                        setup time here. If you will be requesting honorarium then the start date must
+                                        be at least 3 days from today. Events cannot be scheduled more than 60 days out.
+                                    </div>
+                                </div>
+                                <div class="form-group text required">
+                                    <label class="control-label" for="event-end">Event End</label>
+                                    <div class="input-group">
+                                        <input type="text" name="event_end" autocomplete="off"
+                                               required="required" id="event-end"
+                                               class="form-control">
+                                        <span class="input-group-addon">
+                                            <span class="glyphicon glyphicon-calendar"></span>
+                                        </span>
+                                    </div>
+                                    <div class="help-block">Event end time for attendees. Do not include any needed
+                                        teardown time here.
+                                    </div>
+                                </div>
+                                <div class="checkbox">
+                                    <input type="hidden" name="multipart_event" value="0">
+                                    <label for="multipart-event">
+                                        <input type="checkbox" name="multipart_event" value="1" id="multipart-event">Multipart
+                                        Event</label>
+                                    <div class="help-block">This is not to be used for repeating events, but for classes
+                                        that require attendance to multiple class sessions. If this is a multipart event
+                                        then the continued dates can be filled out below this section of the form.
+                                    </div>
+                                </div>
+                                <div class="checkbox">
+                                    <input type="hidden" name="sponsored" value="0">
+                                    <label for="sponsored">
+                                        <input type="checkbox" name="sponsored" value="1" id="sponsored">Sponsored Event</label>
+                                    <div class="help-block">Are you sponsoring this event on behalf of someone else or
+                                        will somone else be the class instructor? If so, their information will be
+                                        required during the submission process.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group textarea required">
+                                    <label class="control-label" for="long-description">Description</label>
+                                    <textarea name="long_description" required="required" rows="12"
+                                              id="long-description" class="form-control"></textarea>
+                                    <div class="help-block">Plaintext only. Line spacing is preserved when displaying
+                                        this information on the event page and links are automatically turned into
+                                        hyperlinks.
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-4">
+                                        <div class="form-group file">
+                                            <label class="control-label" for="files-0-file">File 1</label>
+                                            <input type="file" name="files[0][file]" id="files-0-file">
+                                        </div>
+                                        <div class="checkbox">
+                                            <input type="hidden" name="files[0][private]" value="0">
+                                            <label for="files-0-private">
+                                                <input type="checkbox" name="files[0][private]" value="1"
+                                                       id="files-0-private">Private
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <div class="form-group file">
+                                            <label class="control-label" for="files-1-file">File 2</label>
+                                            <input type="file" name="files[1][file]" id="files-1-file">
+                                        </div>
+                                        <div class="checkbox">
+                                            <input type="hidden" name="files[1][private]" value="0">
+                                            <label for="files-1-private">
+                                                <input type="checkbox" name="files[1][private]" value="1"
+                                                       id="files-1-private">Private
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <div class="form-group file">
+                                            <label class="control-label" for="files-2-file">File 3</label>
+                                            <input type="file" name="files[2][file]" id="files-2-file">
+                                        </div>
+                                        <div class="checkbox">
+                                            <input type="hidden" name="files[2][private]" value="0">
+                                            <label for="files-2-private">
+                                                <input type="checkbox" name="files[2][private]" value="1"
+                                                       id="files-2-private">Private
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <div class="form-group file">
+                                            <label class="control-label" for="files-3-file">File 4</label>
+                                            <input type="file" name="files[3][file]" id="files-3-file">
+                                        </div>
+                                        <div class="checkbox">
+                                            <input type="hidden" name="files[3][private]" value="0">
+                                            <label for="files-3-private">
+                                                <input type="checkbox" name="files[3][private]" value="1"
+                                                       id="files-3-private">Private
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <div class="form-group file">
+                                            <label class="control-label" for="files-4-file">File 5</label>
+                                            <input type="file" name="files[4][file]" id="files-4-file">
+                                        </div>
+                                        <div class="checkbox">
+                                            <input type="hidden" name="files[4][private]" value="0">
+                                            <label for="files-4-private">
+                                                <input type="checkbox" name="files[4][private]" value="1"
+                                                       id="files-4-private">Private
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="help-block">Files will be listed and available for download on the event
+                                    page. Private files will only be visible to you and administrators.
+                                </div>
+                                <div class="form-group select">
+                                    <label class="control-label" for="optional-categories-ids">Categories</label>
+                                    <input type="hidden" name="optional_categories[_ids]" value="">
+                                    <select name="optional_categories[_ids][]" multiple="multiple" style="height: 160px"
+                                            id="optional-categories-ids" class="form-control">
+                                        <option value="105">2D E-drawing</option>
+                                        <option value="27">3dModeling</option>
+                                        <option value="25">3dPrinting</option>
+                                        <option value="72">Amateur Radio</option>
+                                        <option value="95">Arduino</option>
+                                        <option value="71">Automotive</option>
+                                        <option value="69">Blacksmithing</option>
+                                        <option value="101">Board of Directors</option>
+                                        <option value="104">CAD</option>
+                                        <option value="20">Ceramics</option>
+                                        <option value="85">Committee Meetings</option>
+                                        <option value="87">Costuming</option>
+                                        <option value="83">Digital Media</option>
+                                        <option value="84">DMS Business Meetings</option>
+                                        <option value="13">Drawing/Painting</option>
+                                        <option value="61">Drones/RC Planes</option>
+                                        <option value="8">Dye Sublimation</option>
+                                        <option value="98">Education</option>
+                                        <option value="67">Electronics/Microcontrollers</option>
+                                        <option value="79">Engraving</option>
+                                        <option value="94">Expansion</option>
+                                        <option value="3">Fiber Arts</option>
+                                        <option value="77">Finance</option>
+                                        <option value="82">Glass Working</option>
+                                        <option value="65">Graphic Design Software</option>
+                                        <option value="92">Hatchers Armory</option>
+                                        <option value="74">Information Technology</option>
+                                        <option value="103">Infrastructure Group</option>
+                                        <option value="70">Jewelry</option>
+                                        <option value="88">Lapidary</option>
+                                        <option value="45">Laser</option>
+                                        <option value="4">Leatherworking</option>
+                                        <option value="76">Logistics</option>
+                                        <option value="38">Machining</option>
+                                        <option value="93">Marketing</option>
+                                        <option value="100">Member Services</option>
+                                        <option value="66">Metalworking</option>
+                                        <option value="6">Mold Making</option>
+                                        <option value="89">Motorsports</option>
+                                        <option value="29">Photography/Videography/Audiography</option>
+                                        <option value="102">Plastics (P-IG)</option>
+                                        <option value="81">Printmaking</option>
+                                        <option value="68">Programming/Software Development</option>
+                                        <option value="90">Public Relations</option>
+                                        <option value="96">Raspberry Pi</option>
+                                        <option value="31">Reloading</option>
+                                        <option value="97">Resin</option>
+                                        <option value="17">Robotics</option>
+                                        <option value="73">Science</option>
+                                        <option value="11">Sculpting</option>
+                                        <option value="75">Sewing</option>
+                                        <option value="10">Silk Screening</option>
+                                        <option value="86">Small Metals</option>
+                                        <option value="80">Training Development SIG</option>
+                                        <option value="47">VECTOR</option>
+                                        <option value="78">Vintage Computers</option>
+                                        <option value="7">Vinyl Cutting</option>
+                                        <option value="99">Volunteer Opportunities</option>
+                                        <option value="32">Welding</option>
+                                        <option value="91">Wood Turning</option>
+                                        <option value="63">Woodworking</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                </form>
+
+                <fieldset data-depends-on-field="multipart-event" data-dependent-required="0">
+                    <legend>Continued Dates</legend>
+                    <div class="alert alert-info">
+                        Continued dates must be in order and not overlap. The preparation and teardown times for these
+                        dates
+                        will use the same setup and teardown times that are set for this event. Description information
+                        will
+                        also be applied to these dates, with an added note that these are follow-up times for a
+                        multipart
+                        event.
+                        Attendees will only be able to register for the first event in the series and will be carried
+                        through to
+                        the last date.
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group text">
+                                <label class="control-label" for="event-start-2">Second Date Start</label>
+                                <div class="input-group">
+                                    <input type="text" name="event_start_2" autocomplete="off" id="event-start-2"
+                                           class="form-control">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                </div>
+                                <div class="help-block">Event start time for attendees. Do not include any needed setup
+                                    time here.
+                                </div>
+                            </div>
+                            <div class="form-group text">
+                                <label class="control-label" for="event-end-2">Second Date End</label>
+                                <div class="input-group">
+                                    <input type="text" name="event_end_2" autocomplete="off" id="event-end-2"
+                                           class="form-control">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                </div>
+                                <div class="help-block">Event end time for attendees. Do not include any needed teardown
+                                    time here.
+                                </div>
+                            </div>
+                            <div class="form-group text">
+                                <label class="control-label" for="event-start-3">Third Date Start</label>
+                                <div class="input-group">
+                                    <input type="text" name="event_start_3" autocomplete="off" id="event-start-3"
+                                           class="form-control">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                </div>
+                                <div class="help-block">Event start time for attendees. Do not include any needed setup
+                                    time here.
+                                </div>
+                            </div>
+                            <div class="form-group text">
+                                <label class="control-label" for="event-end-3">Third Date End</label>
+                                <div class="input-group">
+                                    <input type="text" name="event_end_3" autocomplete="off" id="event-end-3"
+                                           class="form-control">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                </div>
+                                <div class="help-block">Event end time for attendees. Do not include any needed teardown
+                                    time here.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group text">
+                                <label class="control-label" for="event-start-4">Fourth Date Start</label>
+                                <div class="input-group">
+                                    <input type="text" name="event_start_4" autocomplete="off" id="event-start-4"
+                                           class="form-control">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                </div>
+                                <div class="help-block">Event start time for attendees. Do not include any needed setup
+                                    time here.
+                                </div>
+                            </div>
+                            <div class="form-group text">
+                                <label class="control-label" for="event-end-4">Fourth Date End</label>
+                                <div class="input-group">
+                                    <input type="text" name="event_end_4" autocomplete="off" id="event-end-4"
+                                           class="form-control">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                </div>
+                                <div class="help-block">Event end time for attendees. Do not include any needed teardown
+                                    time here.
+                                </div>
+                            </div>
+                            <div class="form-group text">
+                                <label class="control-label" for="event-start-5">Fifth Date Start</label>
+                                <div class="input-group">
+                                    <input type="text" name="event_start_5" autocomplete="off" id="event-start-5"
+                                           class="form-control">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                </div>
+                                <div class="help-block">Event start time for attendees. Do not include any needed setup
+                                    time here.
+                                </div>
+                            </div>
+                            <div class="form-group text">
+                                <label class="control-label" for="event-end-5">Fifth Date End</label>
+                                <div class="input-group">
+                                    <input type="text" name="event_end_5" autocomplete="off" id="event-end-5"
+                                           class="form-control">
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                </div>
+                                <div class="help-block">Event end time for attendees. Do not include any needed teardown
+                                    time here.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset data-depends-on-field="sponsored" data-dependent-required="0">
+                    <legend>Intructor Information</legend>
+                    <div class="alert alert-info">
+                        When sponsoring an event for someone else or hosting an outside intructor for a class we require
+                        additional information about the person you're sponsoring this event for.
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group text">
+                                <label class="control-label" for="contact-name">New Instructor Name</label>
+                                <input type="text" name="contact[name]" data-depends-on-field="sponsored"
+                                       maxlength="100" id="contact-name" class="form-control"
+                                       style="display: block;">
+                            </div>
+                            <div class="form-group email">
+                                <label class="control-label" for="contact-email">New Instructor Email</label>
+                                <input type="email" name="contact[email]" data-depends-on-field="sponsored"
+                                       maxlength="255" id="contact-email" class="form-control"
+                                       style="display: block;">
+                            </div>
+                            <div class="form-group tel">
+                                <label class="control-label" for="contact-phone">New Instructor Phone Number</label>
+                                <input type="tel" name="contact[phone]" data-depends-on-field="sponsored"
+                                       maxlength="255" id="contact-phone" class="form-control"
+                                       style="display: block;">
+                            </div>
+                            <input type="hidden" name="contact[w9_on_file]" value="0">
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group select">
+                                <label class="control-label" for="contact-id">Existing Instructors</label>
+                                <select name="contact_id" id="contact-id" class="form-control">
+                                    <option value="">Select Existing Instructor</option>
+                                    <option value="-1">Snowie (d4rkfly3r@dallasmakerspace.org)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Attendance</legend>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group select">
+                                <label class="control-label" for="type">Paid Event?</label>
+                                <?= $this->Form->select('type', [
+                                'free' => 'Free',
+                                'paid' => 'Paid (DMS)',
+                                'eventbrite' => 'Paid (Eventbrite)'
+                                ], [
+                                'class' => 'payment-type-select',
+                                'label' => 'Paid Event?'
+                                ]) ?>
+                            </div>
+                            <div class="event-eventbrite hidden">
+                                <?= $this->Form->input('eventbrite_link', [
+                                'type' => 'url',
+                                'help' => 'Eventbrite event URL for taking payments off site. When using Eventbrite you
+                                will
+                                be
+                                responsible for processing any required refunds.',
+                                'placeholder' => 'https://www.eventbrite.com/...',
+                                'required' => false
+                                ]) ?>
+                            </div>
+                            <div class="event-cost hidden">
+                                <?= $this->Form->input('cost', [
+                                'append' => '.00',
+                                'default' => 0,
+                                'help' => 'Cost to attend this event. Leave this at $0.00 if the event is free.
+                                Attendees
+                                will
+                                be charged this amount to register for the event and any payments will be made by Dallas
+                                Makerspace to the required party.',
+                                'min' => 0,
+                                'placeholder' => 0,
+                                'prepend' => '$',
+                                'step' => 1
+                                ]) ?>
+                            </div>
+                            <?= $this->Form->input('free_spaces', [
+                            'default' => 0,
+                            'help' => 'Free spaces available for this event. A 0 denotes no limit unless this is a paid
+                            event.
+                            Mostly relevant for free events, but may be used if a paid class has limited space for
+                            observers. If
+                            using payment through Eventbrite use this to set the number of available spaces for this
+                            event.',
+                            'placeholder' => 0
+                            ]) ?>
+                            <div data-depends-on-field="cost">
+                                <?= $this->Form->input('paid_spaces', [
+                                'data-depends-on-field' => 'type',
+                                'default' => 0,
+                                'help' => 'Paid spaces available for this event. A 0 denotes no limit. Attendees will be
+                                charged
+                                the cost of the event for these spaces.',
+                                'placeholder' => 0
+                                ]) ?>
+                            </div>
+                            <?= $this->Form->input('attendee_cancellation', [
+                            'append' => 'days',
+                            'default' => 0,
+                            'help' => "Last day leading up to the event where attendees are allowed to cancel and
+                            receive a
+                            refund, if applicable. If you don't want attendees to be able to cancel within three days of
+                            the
+                            event then you would enter 3 above. Attendees will be emailed a final reminder 24 hours
+                            before
+                            the
+                            cutoff time for cancelling is reached. Keep in mind, no new registrations are allowed after
+                            the
+                            cancellation cutoff time.",
+                            'label' => 'Cancellation Window',
+                            'min' => 0,
+                            'placeholder' => 0,
+                            'required' => true,
+                            'type' => 'number',
+                            'step' => 1
+                            ]) ?>
+                            <?= $this->Form->input('extend_registration', [
+                            'help' => 'Allow attendees to sign up for a short period of time after the event has begun
+                            by
+                            extending registration. This does not extend registrations past the event start time if a
+                            cancellation window is set.',
+                            'label' => 'Extend Registration',
+                            'options' => [
+                            0 => 'No extended registration',
+                            15 => '15 minutes after start',
+                            20 => '20 minutes after start',
+                            25 => '25 minutes after start',
+                            30 => '30 minutes after start'
+                            ],
+                            'type' => 'select'
+                            ]) ?>
+                        </div>
+                        <div class="col-sm-6">
+                            <h5>Restrictions</h5>
+                            <?= $this->Form->input('members_only', [
+                            'label' => 'Only allow DMS members to register for this event'
+                            ]) ?>
+                            <?= $this->Form->input('attendees_require_approval', [
+                            'help' => "Want to approve each attendee for this event?"
+                            ]) ?>
+                            <?= $this->Form->input('age_restriction', [
+                            'help' => 'If your event requires attendees to be older than a minimum age, select it here.
+                            The
+                            event page will let attendees know that they must meet that age requirement to attend.',
+                            'label' => 'Age Restriction',
+                            'options' => [
+                            0 => 'No age restriction',
+                            13 => '13 and up',
+                            16 => '16 and up',
+                            18 => '18 and up',
+                            21 => '21 and up'
+                            ],
+                            'type' => 'select'
+                            ]) ?>
+                            <?= $this->Form->input('fulfills_prerequisite_id', [
+                            'empty' => 'Select Prerequisite',
+                            'help' => 'If this event is a class which fulfills a prerequisite for future classes or for
+                            tool
+                            usage then select any that apply.'
+                            ]) ?>
+                            <?= $this->Form->input('requires_prerequisite_id', [
+                            'empty' => 'Select Prerequisite',
+                            'help' => 'If this event requires attendees to have a prerequisite fulfilled before taking
+                            this
+                            class or attending this event then select one whcih applies. Note that if a prerequisite is
+                            required
+                            then the event will be limited to DMS members only.'
+                            ]) ?>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Resources</legend>
+                    <?= $this->Form->input('advisories', [
+                    'label' => 'Special Considerations and Warnings',
+                    'help' => 'Most likely to be relevant to classes. Does this event have any special safety
+                    requirements
+                    such
+                    as close-toed shoes? List any considerations, safety requirements or warnings that attendees should
+                    know
+                    about here.'
+                    ]) ?>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Facilities</legend>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <?= $this->Form->input('room_id', [
+                            'empty' => 'Select Room',
+                            'error' => ['escape' => false],
+                            'help' => 'Rooms are available on a first-come, first-served basis. Setup and teardown times
+                            may
+                            overlap. Ignore this if the event takes place throughout the building, such as an open
+                            house.',
+                            'options' => $rooms
+                            ]) ?>
+                            <?= $this->Form->input('tools._ids', [
+                            'options' => $tools,
+                            'help' => 'If this event or class requires certain tools to be available for use during then
+                            select
+                            any that apply.',
+                            'style' => 'height: 150px'
+                            ]) ?>
+                        </div>
+                        <div class="col-sm-6">
+                            <?= $this->Form->input('booking_start', [
+                            'help' => "If you require any setup time for your event it will be made available
+                            immediately
+                            preceding the event's start time.",
+                            'label' => 'Setup Time',
+                            'options' => [
+                            0 => 'No setup time required',
+                            15 => '15 minutes',
+                            30 => '30 minutes',
+                            45 => '45 minutes',
+                            60 => '1 hour'
+                            ],
+                            'type' => 'select'
+                            ]) ?>
+                            <?= $this->Form->input('booking_end', [
+                            'help' => "If you require any teardown time for your event it will be made available
+                            immediately
+                            following the event's end time.",
+                            'label' => 'Teardown Time',
+                            'options' => [
+                            0 => 'No setup time required',
+                            15 => '15 minutes',
+                            30 => '30 minutes',
+                            45 => '45 minutes',
+                            60 => '1 hour'
+                            ],
+                            'type' => 'select'
+                            ]) ?>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset data-depends-on-field="categories-ids-1" data-hidden-on-field="categories-ids-2">
+                    <legend>Honorarium</legend>
+                    <div class="alert alert-info">
+                        <ul>
+                            <li>When requesting honorarium remember that your event's start date must be at
+                                least <?= $config[3] ?> days away, otherwise your submission won't be accepted.
+                            </li>
+                            <li>If a person (you or the event Instructor, if set) will be receiving honorarium then a
+                                W-9 is
+                                required to be on file. If a W-9 is not on file and one is not attached to this
+                                submission
+                                then
+                                the submission won't be accepted. W-9s are transmitted securely over an encrypted
+                                connection
+                                with the server.
+                            </li>
+                            <li>If honorarium will only be paid out to a committee then a W-9 is not required.</li>
+                            <li>Don't want to upload a W-9? You can mail it in instead, but won't be able to submit an
+                                event
+                                for
+                                honorarium until it has been received and processed.<br/>Mail W-9s to:<br/>Dallas
+                                Makerspace
+                                (W-9)<br/>P.O. Box 810663<br/>Dallas, TX 75381-0663
+                            </li>
+                            <li>Need a copy of the W-9 form? <?= $this->Html->link('Download a W-9 from IRS.gov',
+                                'https://www.irs.gov/pub/irs-pdf/fw9.pdf', ['target' => '_blank']) ?>.
+                            <li><strong>Don't Forget!</strong> Class attendance must be marked
+                                within <?= $config[6] * 24 ?>
+                                hours of completion of the event.
+                            </li>
+                        </ul>
+                    </div>
+                    <?php if (!empty($honorariaMessage)): ?>
+                    <span style="color: red;"><?= $honorariaMessage ?></span>
+                    <?php endif; ?>
+                    <?= $this->Form->input('request_honorarium', [
+                    'type' => 'checkbox',
+                    'value' => 1,
+                    'disabled' => ($config[7] == 0) ? true : false,
+                    ]) ?>
+                    <div class="row" data-depends-on-field="request-honorarium" data-dependent-required="0">
+                        <div class="col-sm-4">
+                            <?= $this->Form->input('honorarium.committee_id', [
+                            'data-depends-on-field' => 'request-honorarium',
+                            'data-dependent-required' => true,
+                            'empty' => 'Select Committee'
+                            ]) ?>
+                        </div>
+                        <div class="col-sm-4">
+                            <?= $this->Form->input('honorarium.pay_contact', [
+                            'data-depends-on-field' => 'request-honorarium',
+                            'data-dependent-required' => false,
+                            'label' => 'Pay Instructor',
+                            'options' => [
+                            1 => 'Yes',
+                            0 => 'No'
+                            ],
+                            'type' => 'select'
+                            ]) ?>
+                        </div>
+                        <div class="col-sm-4">
+                            <?= $this->Form->input('contact.w9.file', [
+                            'label' => 'W-9',
+                            'required' => false,
+                            'type' => 'file'
+                            ]); ?>
+                        </div>
+                        <?= $this->Form->hidden('honorarium.paid', ['value' => 0]) ?>
+                    </div>
+                </fieldset>
+
+                <?php if (isset($_GET['copy'])): ?>
+                <?= $this->Form->hidden('copy_of_id', ['default' => $_GET['copy']]) ?>
+                <?php endif; ?>
+                <?= $this->Form->hidden('class_number', ['default' => 1]) ?>
+                <?= $this->Form->hidden('status', ['default' => 'pending']) ?>
+                <?= $this->Form->button(__('Submit Event')) ?>
+                <?= $this->Form->end() ?>
+
+                <div id="config-mininum-booking-lead-time" class="hidden"><?= $config[4] ?></div>
+                <div id="config-maximum-booking-lead-time" class="hidden"><?= $config[5] ?></div>
+
+            {{/blacklisted}}
+        {{/contaxtError}}
+    </div>
+</div>
+</body>
+</html>

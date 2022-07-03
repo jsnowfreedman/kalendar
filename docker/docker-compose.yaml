@@ -1,0 +1,23 @@
+version: "3.8"
+name: "kalendar-compose"
+services:
+  postgres:
+    image: postgres:alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kalendar
+      POSTGRES_USER: kalendar_default
+      POSTGRES_PASSWORD: kalendar_default
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5430:5432"
+  adminer:
+    image: adminer
+    restart: unless-stopped
+    ports:
+      - "9080:8080"
+
+volumes:
+  pgdata:
