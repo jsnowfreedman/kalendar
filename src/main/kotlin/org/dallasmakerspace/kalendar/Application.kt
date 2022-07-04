@@ -1,6 +1,5 @@
 package org.dallasmakerspace.kalendar
 
-import com.github.mustachejava.DefaultMustacheFactory
 import com.google.gson.GsonBuilder
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
@@ -12,25 +11,29 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.serialization.gson.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.config.*
 import io.ktor.server.engine.*
-import io.ktor.server.mustache.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.autohead.*
+import io.ktor.server.plugins.compression.*
+import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 import org.dallasmakerspace.kalendar.views.registerEventRoutes
-import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.sql.Database
 import java.nio.file.Files.walk
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.streams.toList
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation as ServerContentNegotiation
 
 val httpClient = HttpClient(CIO) {
     install(ContentNegotiation) {
@@ -48,7 +51,6 @@ fun main(): Unit = runBlocking {
 
     val config = ConfigFactory.load(System.getProperty("org.dallasmakerspace.config", "config/kalendar.conf"))
     initializeDatabaseConnections(config)
-//    val database = Database.connect("jdbc:h2:mem:regular;DB_CLOSE_DELAY=-1;", "org.h2.Driver")
 
     val gson = GsonBuilder().setPrettyPrinting().create()
 
@@ -64,8 +66,37 @@ fun main(): Unit = runBlocking {
     val oauthContexts = oauthContextsDef.awaitAll().toMap()
 
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
-        install(Mustache) {
-            mustacheFactory = DefaultMustacheFactory("templates")
+        install(ServerContentNegotiation) {
+            gson {
+            }
+        }
+        install(StatusPages) {
+            exception<AuthenticationException> { call, cause ->
+                call.respond(HttpStatusCode.Unauthorized)
+            }
+            exception<AuthorizationException> { call, cause ->
+                call.respond(HttpStatusCode.Forbidden)
+            }
+
+        }
+        install(AutoHeadResponse)
+        install(Compression) {
+            gzip {
+                priority = 1.0
+            }
+            deflate {
+                priority = 10.0
+                minimumSize(1024) // condition
+            }
+        }
+        install(CORS) {
+            allowMethod(HttpMethod.Options)
+            allowMethod(HttpMethod.Put)
+            allowMethod(HttpMethod.Delete)
+            allowMethod(HttpMethod.Patch)
+            allowHeader(HttpHeaders.Authorization)
+            allowHeader("MyCustomHeader")
+            anyHost() // @TODO: Don't do this in production if possible. Try to limit it.
         }
 
         install(Sessions) {
@@ -199,10 +230,9 @@ fun initializeDatabaseConnections(appConfig: Config) {
         username = appConfig.tryGetString("database.username") ?: "kalendar_default"
         password = appConfig.tryGetString("database.password") ?: "kalendar_default"
     })
-    val flyway = Flyway.configure().locations("filesystem:migrations/db").dataSource(dataSource).load()
-
-//    flyway.repair()
-    flyway.migrate()
 
     Database.connect(dataSource)
 }
+
+class AuthenticationException : RuntimeException()
+class AuthorizationException : RuntimeException()
