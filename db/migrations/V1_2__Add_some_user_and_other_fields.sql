@@ -19,4 +19,8 @@ create table contact_sso_sub_binding
     contact_id     uuid not null references contacts (id),
     sub_value      varchar(255),
     oauth_provider varchar(255)
-)
+);
+
+alter table events
+    ALTER copied_from set default null,
+    add column parent uuid null default null references events (id);

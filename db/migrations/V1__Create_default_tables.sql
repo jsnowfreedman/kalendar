@@ -16,7 +16,7 @@ create table events
     attendee_cancellation_by   timestamp        not null,
     sponsored                  boolean          not null default false,
     status                     varchar(30)      not null default 'pending' CHECK ( status in ('approved', 'completed', 'cancelled', 'pending', 'rejected')),
-    creator_id                 integer          not null,
+    creator_id                 uuid             not null,
     archetype                  varchar(255)     null     default null,
     copied_from                uuid             null     default null references events (id),
     created                    timestamp        not null default now(),

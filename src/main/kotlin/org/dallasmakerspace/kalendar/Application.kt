@@ -6,13 +6,13 @@ import com.typesafe.config.ConfigFactory
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.client.*
+import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.gson.*
-import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.config.*
@@ -26,7 +26,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import kotlinx.coroutines.*
-import kotlinx.serialization.json.Json
 import org.dallasmakerspace.kalendar.views.registerEventRoutes
 import org.jetbrains.exposed.sql.Database
 import java.nio.file.Files.walk
@@ -37,11 +36,10 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation as ServerCon
 
 val httpClient = HttpClient(CIO) {
     install(ContentNegotiation) {
-        json(Json {
-            prettyPrint = true
-            isLenient = true
-            ignoreUnknownKeys = true
-        })
+        gson {
+            setPrettyPrinting()
+            setLenient()
+        }
     }
 }
 
@@ -166,16 +164,14 @@ fun Application.installOauthContexts(oauthContexts: Map<String, Pair<InstallFile
                     httpClient.post(urlString) {
                         setBody(bodyStr)
                         contentType(ContentType.parse("application/x-www-form-urlencoded"))
+                    }.apply {
+                        if (status == HttpStatusCode.OK) {
+                            println("Logged out user")
+                        } else {
+                            println("Failed to log out user, status: $status")
+                            println(bodyAsText())
+                        }
                     }
-//                    val http: HttpStatement = httpClient.post(urlString) {
-//                        body = bodyStr
-//                        contentType(ContentType.parse("application/x-www-form-urlencoded"))
-//                    }
-//
-//                    http.execute() { resp ->
-//                        println(resp.status)
-//                        println(resp.readText())
-//                    }
 
                     call.sessions.clear<UserSession>()
                 } catch (e: Exception) {
@@ -185,6 +181,28 @@ fun Application.installOauthContexts(oauthContexts: Map<String, Pair<InstallFile
 
             call.request.queryParameters["redirect"]?.also {
                 call.respondRedirect(it)
+            } ?: call.respondText("You have been logged out!") //TODO make this a JSON/full response
+        }
+        get("/profile") {
+            val userSession: UserSession? = call.sessions.get()
+            if (userSession != null) {
+                oauthContexts[userSession.oauthProvider]?.second?.userinfoEndpoint?.also {
+                    val resp = httpClient.get(it) {
+                        headers {
+                            append(HttpHeaders.Authorization, "Bearer ${userSession.token}")
+                        }
+                    }
+
+                    if (resp.status != HttpStatusCode.OK) {
+                        call.respondRedirect("/login/DallasMakerspace?redirect=/profile") // TODO this should return a request to redirect instead of a full redirect (since this is an API)
+                    } else {
+                        val userInfo: UserInfo = resp.body()
+                        println(userInfo)
+                        call.respondText { userInfo.toString() }
+                    }
+                }
+            } else {
+                call.respondRedirect("/login/DallasMakerspace?redirect=/profile") // TODO this should return a request to redirect instead of a full redirect (since this is an API)
             }
         }
 
@@ -208,8 +226,6 @@ fun Application.installOauthContexts(oauthContexts: Map<String, Pair<InstallFile
                     session.oauthProvider = oauthProvider
                     session.token = principal?.accessToken.toString()
                     session.idHint = principal?.extraParameters?.get("id_token")
-
-                    println(principal)
 
                     val redirect = session.redirect
                     if (redirect != null) {

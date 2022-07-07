@@ -2,8 +2,6 @@ package org.dallasmakerspace.kalendar
 
 import com.google.gson.annotations.SerializedName
 import io.ktor.server.auth.*
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 
 data class InstallFile(
     val realm: String,
@@ -21,20 +19,19 @@ data class InstallFile(
     )
 }
 
-@Serializable
 data class OpenidConfiguration(
     val issuer: String,
-    @SerialName("authorization_endpoint")
+    @SerializedName("authorization_endpoint")
     val authorizationEndpoint: String,
-    @SerialName("token_endpoint")
+    @SerializedName("token_endpoint")
     val tokenEndpoint: String,
-    @SerialName("introspection_endpoint")
+    @SerializedName("introspection_endpoint")
     val introspectionEndpoint: String,
-    @SerialName("userinfo_endpoint")
+    @SerializedName("userinfo_endpoint")
     val userinfoEndpoint: String,
-    @SerialName("end_session_endpoint")
+    @SerializedName("end_session_endpoint")
     val endSessionEndpoint: String,
-    @SerialName("revocation_endpoint")
+    @SerializedName("revocation_endpoint")
     val revocationEndpoint: String,
 )
 
@@ -44,3 +41,13 @@ data class UserSession(
     var token: String? = null,
     var idHint: String? = null,
 ) : Principal
+
+data class UserInfo(
+    var sub: String? = null,
+    var name: String? = null,
+    var preferred_username: String? = null,
+    var given_name: String? = null,
+    var family_name: String? = null,
+    var email: String? = null,
+    var groups: List<String>? = null,
+)

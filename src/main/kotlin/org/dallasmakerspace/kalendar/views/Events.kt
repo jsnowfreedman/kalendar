@@ -5,6 +5,7 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.datetime.*
+import org.dallasmakerspace.kalendar.generated.Contacts
 import org.dallasmakerspace.kalendar.generated.Events
 import org.dallasmakerspace.kalendar.generated.RoomBooking
 import org.dallasmakerspace.kalendar.generated.Rooms
@@ -17,7 +18,7 @@ fun Application.registerEventRoutes() {
             val eventList = transaction {
                 addLogger(Slf4jSqlDebugLogger)
 
-                Events.selectAll()
+                (Events leftJoin Contacts).selectAll()
                     .andWhere {
                         Events.eventEnd greaterEq Clock.System.now()
                             .minus(DateTimeUnit.HOUR)
@@ -27,7 +28,13 @@ fun Application.registerEventRoutes() {
                     .map {
                         val primaryRoomBooking = (RoomBooking leftJoin Rooms).select {
                             RoomBooking.eventId.eq(it[Events.id].value)
-                        }.orderBy(RoomBooking.startTime).single()
+                        }.orderBy(RoomBooking.startTime).firstOrNull()
+
+                        val locationMap = primaryRoomBooking?.run {
+                            mapOf(
+                                "room" to this[Rooms.name]
+                            )
+                        } ?: mapOf()
 
                         mapOf(
                             "uuid" to it[Events.id].value,
@@ -36,20 +43,18 @@ fun Application.registerEventRoutes() {
                             "longDescription" to it[Events.longDescription],
                             "startDate" to it[Events.eventStart],
                             "endDate" to it[Events.eventEnd],
-                            "host" to it[Events.creatorId], // TODO create user/contact table which this should join with...
+                            "host" to mapOf<String, Any>(
+                                "id" to it[Contacts.id].value,
+                                "name" to it[Contacts.name]
+                            ), // TODO create user/contact table which this should join with...
                             "cost" to it[Events.memberCost],
-                            "location" to mapOf(
-                                "room" to primaryRoomBooking[Rooms.name]
-                            )
+                            "location" to locationMap
                         )
                     }
                     .toList()
             }
 
             call.respond(HttpStatusCode.OK, eventList)
-        }
-
-        get("/events/create") {
         }
 
         post("/events/create") {
